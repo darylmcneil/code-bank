@@ -99,14 +99,16 @@ Resources:
             Action: 
               - 'sts:AssumeRole'
       Path: /
-      Policies:
-        - PolicyName: AmazonS3ReadOnlyAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement: 
-              - Effect: Allow
-                Action: ['s3:Get*','s3:List*']               
-                Resource: "arn:aws:iam::110556603820:role/nanos3role"
+  Policies:
+    Type: AWS::IAM::Policy
+    Properties:
+    - PolicyName: AmazonS3ReadOnlyAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement: 
+          - Effect: Allow
+            Action: ['s3:Get*','s3:List*']               
+            Resource: "arn:aws:iam::110556603820:role/nanos3role"
   NanoBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
