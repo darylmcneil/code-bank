@@ -69,8 +69,8 @@ Resources:
           cd /var/www/html
           aws s3 cp s3://udacity-demo-1/udacity.zip .
           unzip -o udacity.zip
-      ImageId: ami-06d51e91cea0dac8d
-      IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+      ImageId: "ami-06d51e91cea0dac8d"
+      IamInstanceProfile: !Ref "ProfileWithRolesForOurApp"
       KeyName: "nanoprojectkey"
       SecurityGroups:
       - Ref: "WebServerSecGroup"
@@ -83,9 +83,10 @@ Resources:
   ProfileWithRolesForOurApp:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      Path: /
+      Path: "/"
       Roles: 
-        - nanos3role
+        - 
+          Ref: "nanos3role"
   nanos3role:
     Type: AWS::IAM::Role
     Properties:
@@ -97,18 +98,23 @@ Resources:
               Service:
                 - "ec2.amazonaws.com"
             Action: 
-              - 'sts:AssumeRole'
-      Path: /
+              - "sts:AssumeRole"
+      Path: "/"
   Policies:
     Type: AWS::IAM::Policy
     Properties:
-    - PolicyName: AmazonS3ReadOnlyAccess
+      PolicyName: "AmazonS3ReadOnlyAccess"
       PolicyDocument:
-        Version: 2012-10-17
+        Version: "2012-10-17"
         Statement: 
-          - Effect: Allow
-            Action: ['s3:Get*','s3:List*']               
-            Resource: "arn:aws:iam::110556603820:role/nanos3role"
+          - Effect: "Allow"
+            Action: 
+              - "s3:Get*"
+              - "s3:List*"              
+            Resource: "*"
+      Roles:
+        - 
+          Ref: "nanos3role"
   NanoBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -126,8 +132,8 @@ Resources:
           !Sub "${EnvironmentName}-PUB-NETS"
       LaunchConfigurationName:
         Ref: "WebAppLaunchConfig"
-      MinSize: '4'
-      MaxSize: '6'
+      MinSize: "4"
+      MaxSize: "6"
       TargetGroupARNs:
       - Ref: "WebAppTargetGroup"
   WebAppLB:
@@ -137,28 +143,27 @@ Resources:
       - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN" 
       - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN" 
       SecurityGroups:
-      - Ref: LBSecGroup 
+      - Ref: "LBSecGroup" 
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
       - Type: "forward"
       TargetGroupArn:
-        Ref: WebAppTargetGroup
-      LoadBalancerArn: 
-        Ref: WebAppLB
-      Port: '80'
-      Protocol: HTTP
+        Ref: "WebAppTargetGroup"
+      LoadBalancerArn: !Ref "WebAppLB"
+      Port: 80
+      Protocol: "HTTP"
   ALBListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       Actions:
-      - Type: "forward"
-      - TargetGroupArn: !Ref WebAppTargetGroup
+        - Type: "forward"
+          TargetGroupArn: !Ref "WebAppTargetGroup"
       Conditions:
-      - Field: path-pattern
-        Values: [/]
-      ListenerArn: !Ref Listener
+        - Field: path-pattern
+          Values: /
+      ListenerArn: !Ref "Listener"
       Priority: 1
   WebAppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -174,6 +179,84 @@ Resources:
       VpcId: 
         Fn::ImportValue: 
           Fn::Sub: "${EnvironmentName}-VPCID"
+  BastionSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow  SSH from My IP
+      VpcId:
+        Fn::ImportValue: !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref "MyIP"
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  BastionInstance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref "BastionImage"
+      KeyName: "nanoprojectkey"
+      IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+      SecurityGroupIds:
+        - "sg-00d747da54cae5ad5"
+      InstanceType: t2.micro
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeSize: "10"
+            DeleteOnTermination: "true"
+      SubnetId:
+        Fn::ImportValue: 
+          !Sub "${EnvironmentName}-PUB1-SN"
+  BastionInstance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref "BastionImage"
+      KeyName: "nanoprojectkey"
+      IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+      SecurityGroupIds:
+        - "sg-00d747da54cae5ad5"
+      InstanceType: "t2.micro"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeSize: "10"
+            DeleteOnTermination: "true"
+      SubnetId: 
+        Fn::ImportValue: 
+          !Sub "${EnvironmentName}-PUB2-SN"
+  NanoAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/EC2                                                 
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref WebAppGroup
+      AlarmActions:
+        - !Ref MySNSTopic
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      EvaluationPeriods: 4
+      Period: 60
+      Statistic: Average
+      Threshold: 80
+      AlarmDescription: CPU Utilization of NanoAlarm80 with 80% as threshold
+      AlarmName: "NanoAlarm80"
+  MySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "MySNSTopic"
+  MySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref "MyEmail"
+      Protocol: email
+      TopicArn: !Ref 'MySNSTopic'
 
 Outputs:
 

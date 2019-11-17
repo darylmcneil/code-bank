@@ -1,0 +1,30 @@
+[
+    {
+        "ParameterKey": "EnvironmentName",
+        "ParameterValue": "DarylUdacityProject"
+    },
+    {
+        "ParameterKey": "UrlName",
+        "ParameterValue": "http//:"
+    },
+    {   
+        "ParameterKey": "MyIP",
+        "ParameterValue":  "73.163.168.213/32"
+    },
+    {   
+        "ParameterKey": "S3RoleArn",
+        "ParameterValue": "arn:aws:iam::110556603820:role/nanos3role"
+    },
+    {   
+        "ParameterKey": "UbuntuImage",
+        "ParameterValue": "ami-06d51e91cea0dac8d"
+    },
+    {
+        "ParameterKey": "BastionImage",
+        "ParameterValue": "ami-08d489468314a58df"
+    },
+    {
+        "ParameterKey": "MyEmail",
+        "ParameterValue": "darylmcneil5@gmail.com"
+    }     
+]
