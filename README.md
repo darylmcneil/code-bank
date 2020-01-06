@@ -1,18 +1,18 @@
 # code-bank
 
-###Project 
+### Project 
 
-##Deploy Infrastructure as a code
+## Deploy Infrastructure as a code
 
 
-###Project Overview
+### Project Overview
 
 - Introduction to Cloudformation
 - Understanding diagrams
 - Infrastructure as Code (Convert Diagrams into code)
 - Deploying services via Cloudfomation (aws cli)
 
-###Prerequisite packages and tools
+### Prerequisite packages and tools
 
 
 Version Control (Git)
@@ -25,7 +25,7 @@ Github account w/ github desktop app
 
 
 
-###Installation/set up environment
+### Installation/set up environment
 
 
 1. Create " Repository " via Github
@@ -42,7 +42,7 @@ Github account w/ github desktop app
 
 
 
-###Project Task's
+### Project Task's
 
 
 1. Create network infrastucture ( _VPC, Subnets, routing tables, NAT gateways etc...._) using VSC editor to create a _.yml file_
@@ -60,4 +60,8 @@ Github account w/ github desktop app
 7. Check deployment status via AWS Management console `Cloudformation` interface.
 
 
-###Clean-Up
+### Clean-Up
+
+1. Run `./delete.sh` via bash terminal to delete cloudformation stack resources
+
+2. Confirm deleted stack and associated resources via AWS Management Console `Cloudformation` Interface.
